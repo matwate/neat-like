@@ -21,7 +21,7 @@ func fitness(ag Agent, _ int) float64 {
 func main() {
 	template := Agent{NewNeatlike(1, 1), 0, false}
 	s := NewSim(100, 9, fitness, template, Above)
-	agent := s.RunUntilThreshold()
+	agent := s.RunUntilThreshold(10)
 	print_matrix(agent.neatlike.dag.adjacencyMatrix)
 	fmt.Println(
 		agent.neatlike.inputs,

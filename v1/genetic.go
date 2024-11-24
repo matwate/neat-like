@@ -41,6 +41,7 @@ type Simulation struct {
 	condition        Condition
 	fitnessFunction  func(Agent, int) float64 // This is so fitness functions can do whatever they want
 	templateAgent    Agent
+	once             sync.Once
 }
 
 func NewSim(
@@ -56,17 +57,20 @@ func NewSim(
 	s.fitnessFunction = fitnessFunction
 	s.templateAgent = templateAgent
 	s.condition = condition
+	s.once = sync.Once{}
 	return s
 }
 
 func (s *Simulation) Run() []Agent {
 	// Spawn the first generation
-	for i := 0; i < len(s.population); i++ {
-		s.population[i].neatlike = NewNeatlike(
-			s.templateAgent.neatlike.inputs,
-			s.templateAgent.neatlike.outputs,
-		)
-	}
+	s.once.Do(func() {
+		for i := 0; i < len(s.population); i++ {
+			s.population[i].neatlike = NewNeatlike(
+				s.templateAgent.neatlike.inputs,
+				s.templateAgent.neatlike.outputs,
+			)
+		}
+	})
 	// Concurrently calculate the fitness of each agent
 	var wg sync.WaitGroup
 	for i := range s.population {
@@ -151,11 +155,14 @@ func selectAgent(population []Agent, totalFitness float64) Agent {
 }
 
 // This one will run until the fitness is above a certain threshold
-func (s *Simulation) RunUntilThreshold() Agent {
+func (s *Simulation) RunUntilThreshold(max int) Agent {
 	atts := 0
 	best := s.population[0].fitness
 Outer:
 	for {
+		if atts > max {
+			break
+		}
 		atts++
 		s.Run()
 		switch s.condition {
@@ -163,7 +170,6 @@ Outer:
 			if s.population[0].fitness > s.fitnessThreshold {
 				if s.population[0].fitness > best {
 					best = s.population[0].fitness
-
 				}
 				break Outer
 			}
@@ -171,7 +177,6 @@ Outer:
 			if s.population[0].fitness < s.fitnessThreshold {
 				if s.population[0].fitness < best {
 					best = s.population[0].fitness
-
 				}
 				break Outer
 			}
