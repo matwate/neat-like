@@ -8,7 +8,9 @@ func (g *Genome) MutateAddNode() {
 	if splitNode >= g.input {
 		splitNode += g.output
 	}
-
+	if len(g.dag.nodes[splitNode].outgoing) == 0 {
+		return
+	}
 	rand_conn := g.dag.nodes[splitNode].outgoing[rand.Intn(len(g.dag.nodes[splitNode].outgoing))]
 	// Now we change splitNode -> rand_conn to splitNode -> newNode -> rand_conn
 	g.AddNode(Hidden)
@@ -28,6 +30,9 @@ func (g *Genome) MutateAddConnection() {
 	if from >= g.input {
 		from += g.output
 	}
+	if len(g.dag.nodes[from].outgoing) == 0 {
+		return
+	}
 	// Pick a random non input nodes
 	to := rand.Intn(g.hidden+g.output) + g.input
 	// Check if connection already exists
@@ -43,6 +48,9 @@ func (g *Genome) MutateChangeWeight() {
 	if from >= g.input {
 		from += g.output
 	}
+	if len(g.dag.nodes[from].outgoing) == 0 {
+		return
+	}
 	to := g.dag.nodes[from].outgoing[rand.Intn(len(g.dag.nodes[from].outgoing))]
 	// Change the weight
 	g.nodes[from].connections[to] = GenomeConnection{
@@ -56,6 +64,9 @@ func (g *Genome) MutateChangeBias() {
 	from := rand.Intn(g.input + g.hidden)
 	if from >= g.input {
 		from += g.output
+	}
+	if len(g.dag.nodes[from].outgoing) == 0 {
+		return
 	}
 	to := g.dag.nodes[from].outgoing[rand.Intn(len(g.dag.nodes[from].outgoing))]
 	// Change the bias
