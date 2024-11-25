@@ -10,5 +10,5 @@ Note: **this readme is more like a personal to do list than a project readme**
 ### Tasks
 
 1. [x] Implement the DAG
-2. [ ] Implement the evolving algorithm
+2. [x] Implement the evolving algorithm
 3. [ ] Implement the genetic algorithm to select agents according to their fitness
