@@ -119,6 +119,16 @@ func (d *Dag) RemoveConnection(from, to int) bool {
 	return true
 }
 
+func (d *Dag) hasConnection(from, to int) bool {
+	if !d.IsValid(from) || !d.IsValid(to) {
+		return false
+	}
+	out := d.nodes[from].outgoing
+	return any(out, func(v int) bool {
+		return v == to
+	})
+}
+
 func any[T comparable](s []T, f func(T) bool) bool {
 	for _, v := range s {
 		if f(v) {
