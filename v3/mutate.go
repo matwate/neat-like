@@ -77,15 +77,23 @@ func (g *Genome) MutateChangeBias() {
 }
 
 func (g *Genome) Mutate() {
-	// Equal chance of each mutation
 	switch rand.Intn(4) {
 	case 0:
+		switch rand.Intn(2) {
+		case 0:
+			g.MutateChangeWeight()
+		case 1:
+			g.MutateChangeBias()
+		}
+	default:
+		// Do nothing
+	}
+	// Random number between 0 and 1
+	random := rand.Float64()
+	if random < 0.05 {
 		g.MutateAddNode()
-	case 1:
+	}
+	if random < 0.8 {
 		g.MutateAddConnection()
-	case 2:
-		g.MutateChangeWeight()
-	case 3:
-		g.MutateChangeBias()
 	}
 }

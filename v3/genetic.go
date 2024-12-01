@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"sort"
@@ -16,23 +17,23 @@ const (
 )
 
 type Agent struct {
-	dna     Genome
+	dna     *Genome
 	fitness float64
 }
 
 type Population struct {
-	agents        []Agent
+	agents        []*Agent
 	threshold     float64
 	mutationCount int
 	eval          TypeOfEval
-	evaluate      func(Genome) float64
+	evaluate      func(*Genome) float64
 }
 
 func NewPopulation(
 	threshold float64,
 	x, y int,
 	eval TypeOfEval,
-	evaluate func(Genome) float64,
+	evaluate func(*Genome) float64,
 	mutationCount int,
 ) *Population {
 	var p Population
@@ -44,8 +45,35 @@ func NewPopulation(
 	return &p
 }
 
+func (p *Population) SelectUntilTreshold(n int) {
+	for i := 0; i < n; i++ {
+		fmt.Println("Iteration:", i)
+		p.Select()
+		switch p.eval {
+		case ABOVE:
+			if p.agents[0].fitness > p.threshold {
+				fmt.Println("Found a fitness above the threshold")
+				fmt.Println("Best fitness:", p.agents[0].fitness)
+				return
+			}
+		case BELOW:
+			if p.agents[0].fitness < p.threshold {
+				fmt.Println("Found a fitness below the threshold")
+				fmt.Println("Best fitness:", p.agents[0].fitness)
+				return
+			}
+		case CLOSEST:
+			if p.agents[0].fitness-p.threshold < 0.01 {
+				fmt.Println("Found a fitness close to the threshold")
+				fmt.Println("Best fitness:", p.agents[0].fitness)
+				return
+			}
+		}
+	}
+}
+
 func (p *Population) Select() {
-	// Evaluate the fitness of each agents
+	// First, evaluate all agents concurrently
 	var wg sync.WaitGroup
 	for i := range p.agents {
 		wg.Add(1)
@@ -55,7 +83,8 @@ func (p *Population) Select() {
 		}(i)
 	}
 	wg.Wait()
-	// Sort the population by fitness
+
+	// Sort agents by fitness
 	switch p.eval {
 	case ABOVE:
 		sort.Slice(p.agents, func(i, j int) bool {
@@ -74,54 +103,37 @@ func (p *Population) Select() {
 			)
 		})
 	}
-	// Pick the top 30% of the population
-	newPopulation := make([]Agent, len(p.agents))
-	for i := 0; i < len(p.agents)/3; i++ {
-		newPopulation[i] = p.agents[i]
-	}
-	// Sample the rest of the population weighted by fitness
+
+	// Select the best 35% of the agents
+	elite := make([]*Agent, int(0.35*float64(len(p.agents))))
+	copy(elite, p.agents[:len(elite)])
+	// Sample the rest of the agents, weighted by fitness
 	totalFitness := 0.0
 	for _, agent := range p.agents {
 		totalFitness += agent.fitness
 	}
-	for i := len(p.agents) / 3; i < len(p.agents); i++ {
-		selectedAgent := selectAgent(p.agents, totalFitness)
-		selectedAgent.dna.Mutate()
-		newPopulation[i] = selectedAgent
+	for i := len(p.agents); i < len(elite); i++ {
+		p.agents = append(p.agents, selectAgent(elite, totalFitness))
 	}
-	copy(p.agents, newPopulation)
-}
-
-func (p *Population) SelectUntilTreshold(escape int) {
-	for i := 0; i < escape; i++ {
-		p.Select()
-		switch p.eval {
-		case ABOVE:
-			if p.agents[0].fitness > p.threshold {
-				return
-			}
-		case BELOW:
-			if p.agents[0].fitness < p.threshold {
-				return
-			}
-		case CLOSEST:
-			if math.Abs(p.agents[0].fitness-p.threshold) < 0.01 {
-				return
-			}
-
+	// Mutate the agents
+	for i := len(elite); i < len(p.agents); i++ {
+		for j := 0; j < p.mutationCount; j++ {
+			p.agents[i].dna.Mutate()
 		}
 	}
+	assert_equal(len(p.agents), 1000)
 }
 
 func (p *Population) Init(x, y int) {
-	p.agents = make([]Agent, 100)
+	p.agents = make([]*Agent, 1000)
 	for i := range p.agents {
-		p.agents[i].dna = NewGenome()
-		p.agents[i].dna.Init(x, y)
+		gen := NewGenome()
+		gen.Init(x, y)
+		p.agents[i] = &Agent{dna: &gen}
 	}
 }
 
-func selectAgent(agents []Agent, totalFitness float64) Agent {
+func selectAgent(agents []*Agent, totalFitness float64) *Agent {
 	r := rand.Float64() * totalFitness
 	for _, agent := range agents {
 		r -= agent.fitness

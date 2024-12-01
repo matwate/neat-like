@@ -3,32 +3,29 @@ package main
 import (
 	"fmt"
 	"math"
-	"math/rand"
 )
 
 func main() {
 	// New simulation
 	s := NewPopulation(
-		4.5,
+		0,
 		1, 1,
-		ABOVE,
+		CLOSEST,
 		fit,
 		5,
 	)
-	s.Select()
-	for i := 0; i < len(s.agents); i++ {
-		fmt.Printf("Agent %v, fitness %v\n", i, s.agents[i].fitness)
-	}
+
+	s.SelectUntilTreshold(20)
+	fmt.Println("Best fitness:", s.agents[0].fitness)
 }
 
-func fit(g Genome) float64 {
-	// We will give it 5 random values and if the net's value is close enough to sin(x) we'll give a +1 to the fitness
-	var fitness float64
-	for i := 0; i < 5; i++ {
-		x := rand.Float64() * 2 * math.Pi
-		if math.Abs(g.Forward(x)[0]-math.Sin(x)) < 0.1 {
-			fitness++
-		}
+func fit(g *Genome) float64 {
+	// We will take 100 evenly spaced samples between 0 and 2π and calculate the sum of the squares of the differences between the sine of the sample and the sample itself.
+	// The fitness of the genome will be the negative of this sum.
+	sum := 0.0
+	for i := 0; i < 100; i++ {
+		x := 2 * math.Pi * float64(i) / 100
+		sum += math.Pow(math.Sin(x)-g.Forward(x)[0], 2)
 	}
-	return fitness
+	return sum
 }

@@ -47,7 +47,7 @@ type GenomeConnection struct {
 
 func NewGenome() Genome {
 	return Genome{
-		dag:    *NewDag(),
+		dag:    NewDag(),
 		nodes:  make(map[int]*GenomeNode),
 		input:  0,
 		output: 0,
@@ -103,7 +103,7 @@ func (g *Genome) AddConnection(from, to int, values ...float64) {
 		// panic("Connection already exists")
 		return
 	default:
-		if len(values) != 2 || values[0] == 0 && values[1] == 0 {
+		if len(values) != 2 || values[0] != 0 && values[1] != 0 {
 			g.nodes[from].connections[to] = GenomeConnection{
 				weight: rand.Float64(),
 				bias:   rand.Float64(),
@@ -126,11 +126,13 @@ func (g *Genome) Forward(inputs ...float64) []float64 {
 	assert_equal(len(inputs), g.input)
 	// Get the evaluation order
 	order := g.dag.getOrder()
+	fmt.Println(order)
 	// Make a values list to store the values of each node
 	var values []float64 = make([]float64, len(g.dag.nodes))
 	for i := range inputs {
 		values[i] = inputs[i]
 	}
+	fmt.Println(values)
 
 	// Iterate over the order and calculate the values of each nodes
 	for _, node := range order {

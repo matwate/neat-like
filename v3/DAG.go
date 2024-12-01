@@ -3,15 +3,15 @@ package main
 import "sort"
 
 type Dag struct {
-	nodes []*Node
+	nodes []Node
 }
 
-func NewDag() *Dag {
-	return &Dag{}
+func NewDag() Dag {
+	return Dag{}
 }
 
 func (d *Dag) AddNode() {
-	d.nodes = append(d.nodes, &Node{})
+	d.nodes = append(d.nodes, Node{})
 }
 
 func (d *Dag) AddEdge(from, to int) bool {
@@ -113,10 +113,7 @@ func (d *Dag) RemoveConnection(from, to int) bool {
 			d.nodes[to].incoming--
 		}
 	}
-	if found == 0 {
-		return false
-	}
-	return true
+	return found != 0
 }
 
 func (d *Dag) hasConnection(from, to int) bool {
@@ -127,6 +124,17 @@ func (d *Dag) hasConnection(from, to int) bool {
 	return any(out, func(v int) bool {
 		return v == to
 	})
+}
+
+func (n *Node) DeepCopy() *Node {
+	copiedOutgoing := make([]int, len(n.outgoing))
+	copy(copiedOutgoing, n.outgoing)
+	return &Node{
+		activation: n.activation,
+		outgoing:   copiedOutgoing,
+		incoming:   n.incoming,
+		depth:      n.depth,
+	}
 }
 
 func any[T comparable](s []T, f func(T) bool) bool {
