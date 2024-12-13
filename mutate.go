@@ -1,4 +1,4 @@
-package main
+package neatlike
 
 import (
 	"math/rand/v2"

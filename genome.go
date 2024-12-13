@@ -1,4 +1,4 @@
-package main
+package neatlike
 
 import (
 	"fmt"
@@ -77,7 +77,6 @@ func (g *Genome) ForwardPropagation(input ...float64) []float64 {
 		// Get incoming edges to the current node
 		if g.adjacency == nil {
 			g.adjacency, _ = g.graph.AdjacencyMap()
-
 		}
 		adj := g.adjacency
 		var inEdges []graph.Edge[int]
