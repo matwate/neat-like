@@ -10,14 +10,14 @@ import (
 const MUTATION_COUNT = 2
 
 type Agent struct {
-	genome  *Genome
-	fitness float64
+	Genome  *Genome
+	Fitness float64
 }
 
 type Population []Agent
 
 type Simulation struct {
-	population     Population
+	Population     Population
 	threshold      ThresholdBreak
 	thresholdValue float64
 }
@@ -35,7 +35,7 @@ func (p Population) Len() int {
 }
 
 func (p Population) Less(i, j int) bool {
-	return p[i].fitness < p[j].fitness
+	return p[i].Fitness < p[j].Fitness
 }
 
 func (p Population) Swap(i, j int) {
@@ -45,7 +45,7 @@ func (p Population) Swap(i, j int) {
 func NewPopulation(size int, inputs int, outputs int) Population {
 	p := make(Population, size)
 	for i := range p {
-		p[i].genome = NewGenome(inputs, outputs)
+		p[i].Genome = NewGenome(inputs, outputs)
 	}
 	return p
 }
@@ -58,7 +58,7 @@ func NewSimulation(
 	brek ThresholdBreak,
 ) Simulation {
 	return Simulation{
-		population:     NewPopulation(size, inputs, outputs),
+		Population:     NewPopulation(size, inputs, outputs),
 		threshold:      brek,
 		thresholdValue: thresh,
 	}
@@ -66,38 +66,38 @@ func NewSimulation(
 
 func (s Simulation) Train(
 	max_iter int,
-	fitness func(*Genome) float64,
+	Fitness func(*Genome) float64,
 	breaks ...func(float64) bool,
 ) Agent {
-	p := s.population
+	p := s.Population
 Sim:
 	for iter := 0; iter < max_iter; iter++ {
 
-		// Evaluate fitness concurrently
+		// Evaluate Fitness concurrently
 		var wg sync.WaitGroup
 
 		for i := range p {
 			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()
-				p[i].fitness = fitness(p[i].genome)
+				p[i].Fitness = Fitness(p[i].Genome)
 			}(i)
 		}
 		wg.Wait()
 
-		// Sort population based on fitness
+		// Sort Population based on Fitness
 		switch s.threshold {
 		case Highest:
 			sort.Slice(p, func(i, j int) bool {
-				return p[i].fitness > p[j].fitness
+				return p[i].Fitness > p[j].Fitness
 			})
 		case Lowest:
 			sort.Slice(p, func(i, j int) bool {
-				return p[i].fitness < p[j].fitness
+				return p[i].Fitness < p[j].Fitness
 			})
 		case Closest:
 			sort.Slice(p, func(i, j int) bool {
-				return math.Abs(p[i].fitness-s.thresholdValue) < math.Abs(p[j].fitness-s.thresholdValue)
+				return math.Abs(p[i].Fitness-s.thresholdValue) < math.Abs(p[j].Fitness-s.thresholdValue)
 			})
 		}
 		// Keep top performers
@@ -107,31 +107,31 @@ Sim:
 		// Append top performers
 		newPop = append(newPop, p[:thresh]...)
 
-		// Generate the rest of the population
+		// Generate the rest of the Population
 		for i := thresh; i < len(p); i++ {
 			parent := newPop[i%thresh]
 
-			// Copy and mutate the genome
-			newGenome := parent.genome.Copy()
+			// Copy and mutate the Genome
+			newGenome := parent.Genome.Copy()
 			newGenome.Mutate(MUTATION_COUNT)
 
-			// Create a new agent with the mutated genome
+			// Create a new agent with the mutated Genome
 			newAgent := Agent{
-				genome:  newGenome,
-				fitness: 0,
+				Genome:  newGenome,
+				Fitness: 0,
 			}
 
 			// Append the new agent
 			newPop = append(newPop, newAgent)
 		}
 
-		// Update the population
-		s.population = newPop
-		p = s.population
-		fmt.Println("Iteration: ", iter, "Fitness: ", p[0].fitness)
-		_ = fmt.Sprintf("Iteration: %d Fitness: %f", iter, p[0].fitness)
+		// Update the Population
+		s.Population = newPop
+		p = s.Population
+		fmt.Println("Iteration: ", iter, "Fitness: ", p[0].Fitness)
+		_ = fmt.Sprintf("Iteration: %d Fitness: %f", iter, p[0].Fitness)
 		// We can specify a break condition, to signify that the training was successful
-		best := p[0].fitness
+		best := p[0].Fitness
 		if len(breaks) > 0 {
 			for _, b := range breaks {
 				if b(best) {
